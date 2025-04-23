@@ -16,12 +16,46 @@ public class VegetableThrower : MonoBehaviour
     [Header("UI")]
     public Image chargeBarFilling;
 
-    // Update is called once per frame
+    float chargeStartTime;
+    bool isCharging = false;
+
     void Update()
     {
-        //Charger/Langer le légume
+        if (Input.GetMouseButtonDown(0))
+        {
+            isCharging = true;
+            chargeStartTime = Time.time;
+        }
+        if (Input.GetMouseButton(0) && isCharging)
+        {
+            float elapsed = Time.time - chargeStartTime;
+            throwForce01 = Mathf.Clamp01(elapsed / throwForceChargeTime);
+        }
+        if (Input.GetMouseButtonUp(0) && isCharging)
+        {
+            float throwForce = Mathf.Lerp(minThrowForce, maxThrowForce, throwForce01);
+            Rigidbody veg = InstantiateRandomVegetable();
+            ThrowVegetable(veg, throwForce);
+            throwForce01 = 0;
+            isCharging = false;
+        }
 
-        //Met à jour le remplissage de la barre d'UI
         chargeBarFilling.fillAmount = throwForce01;
+    }
+
+    Rigidbody InstantiateRandomVegetable()
+    {
+        int idx = Random.Range(0, vegetables.Length);
+        Rigidbody prefab = vegetables[idx];
+        Rigidbody instance = Instantiate(prefab, transform.position, transform.rotation);
+        return instance;
+    }
+
+    void ThrowVegetable(Rigidbody vegetable, float throwForce)
+    {
+        Vector3 direction = transform.forward;
+        vegetable.AddForce(direction * throwForce, ForceMode.Impulse);
+        Vector3 randomTorque = Random.insideUnitSphere * maxRandomTorque;
+        vegetable.AddTorque(randomTorque, ForceMode.Impulse);
     }
 }
